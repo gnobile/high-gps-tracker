@@ -1,0 +1,121 @@
+//
+//  FirstViewController.h
+//  highss
+//
+//  Created by Giorgio Nobile on 08/06/10.
+//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//
+#import <UIKit/UIKit.h>
+#import <CoreLocation/CoreLocation.h> 
+#import <MapKit/MapKit.h>
+#import <MapKit/MKAnnotation.h>
+#import <MapKit/MKReverseGeocoder.h>
+#import "ThirdViewController.h"
+#import "FBConnect/FBConnect.h"
+#import <MessageUI/MessageUI.h>
+#import <MessageUI/MFMailComposeViewController.h>
+
+
+
+#define kAutolock		@"autolock"
+//#define kSpeed			@"speed"
+#define kUnit			@"unit"
+#define kGps			@"gps"
+
+
+//includo il framework x accesso alle funzionalità gps, mappa e FB
+
+@interface FirstViewController : 
+UIViewController <MFMailComposeViewControllerDelegate, CLLocationManagerDelegate, MKReverseGeocoderDelegate, MKAnnotation, MKMapViewDelegate, FBSessionDelegate, FBRequestDelegate> {
+
+	CLLocationManager	*locManager; 
+	//accedo delegate methods di cllocman e setto var per
+	//istanziale cllocmanager
+	CLLocation	*startingPoint; //prendo il punto di partenza
+	UILabel *latitudine;
+	UILabel *longitudine;
+	UILabel *altitudine;	
+	UILabel *altitudineFeet;
+//	UILabel *location;
+	UILabel *speed;
+	UILabel *speedms;
+	UILabel *citta;
+	UILabel *uspeed;
+	UILabel *uspeedms;
+	UILabel *mp;
+	UILabel *totaldistance;
+	UIImageView *dir;
+	UIImageView *status;
+	MKReverseGeocoder *geoCoder;
+	UIButton *emailx;
+	UIButton *play;
+	NSMutableArray *locations;
+	UIActivityIndicatorView *active;
+
+	//FB Def
+	FBSession* _session;
+	FBLoginDialog *_loginDialog;
+	UIButton *_postGradesButton;
+	UIButton *_logoutButton;
+	NSString *_facebookName;
+	BOOL _posting;
+	
+}
+
+
+@property (assign, nonatomic) CLLocationManager *locManager;
+@property (retain, nonatomic) CLLocation *startingPoint;
+@property (retain, nonatomic) IBOutlet UILabel *latitudine;
+@property (retain, nonatomic) IBOutlet UILabel *longitudine;
+@property (retain, nonatomic) IBOutlet UILabel *altitudine;
+@property (retain, nonatomic) IBOutlet UILabel *altitudineFeet;
+@property (retain, nonatomic) IBOutlet UILabel *speed;
+@property (retain, nonatomic) IBOutlet UILabel *speedms;
+@property(nonatomic, retain) NSMutableArray *locations;
+@property (retain, nonatomic) IBOutlet UILabel *citta;
+@property (retain, nonatomic) IBOutlet UILabel *uspeed;
+@property (retain, nonatomic) IBOutlet UILabel *uspeedms;
+@property (retain, nonatomic) IBOutlet UILabel *totaldistance;
+@property (nonatomic,retain) IBOutlet UILabel *mp;
+@property (retain, nonatomic) IBOutlet UIImageView *dir;
+@property (nonatomic,retain) IBOutlet UIImageView *status;
+@property (nonatomic, retain) IBOutlet UIButton *emailx;
+@property (nonatomic, retain) IBOutlet UIButton *play;
+@property (nonatomic, retain) MKReverseGeocoder *geoCoder;
+@property (nonatomic, retain) UIActivityIndicatorView *active;
+
+
+
+//FB Property
+@property (nonatomic, retain) FBSession *session;
+@property (nonatomic, retain) IBOutlet UIButton *postGradesButton;
+@property (nonatomic, retain) IBOutlet UIButton *logoutButton;
+@property (nonatomic, retain) FBLoginDialog *loginDialog;
+@property (nonatomic, copy) NSString *facebookName;
+@property (nonatomic, assign) BOOL posting;
+
+-(void)animating;
+-(void)stopanimating;
+-(void)reversing;
+-(void)displayComposerSheet;
+-(IBAction)emailTo:(id)sender;
+-(IBAction)updating:(id)sender;
+- (void) locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation
+			fromLocation:(CLLocation *)oldLocation;
+
+- (NSString *)savePathRotta;
+- (NSString *)savePathAltezza;
+- (NSString *)dayPath;
+- (NSString *)dirPath;
+- (NSString *)dataFilePath;
+- (NSString *)meterFilePath;
+- (NSString *)kmlFilePath;
+
+//FB Method
+- (IBAction)postGradesTapped:(id)sender;
+- (IBAction)logoutButtonTapped:(id)sender;
+- (void)postToWall;
+- (void)getFacebookName;
+
+
+@end

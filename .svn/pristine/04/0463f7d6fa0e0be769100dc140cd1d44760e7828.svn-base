@@ -1,0 +1,78 @@
+//
+//  MusicViewController.m
+//  highest
+//
+//  Created by Giorgio Nobile on 02/07/10.
+//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//
+
+#import "MusicViewController.h"
+#import <MediaPlayer/MediaPlayer.h>
+
+
+@implementation MusicViewController
+
+/*
+ // The designated initializer.  Override if you create the controller programmatically and want to perform customization that is not appropriate for viewDidLoad.
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil {
+    if ((self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil])) {
+        // Custom initialization
+    }
+    return self;
+}
+*/
+
+
+// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
+- (void)viewDidLoad {
+    [super viewDidLoad];
+	MPMediaPickerController *picker =
+    [[MPMediaPickerController alloc]
+	 initWithMediaTypes: MPMediaTypeAnyAudio];                   // 1
+	
+	[picker setDelegate: self];                                         // 2
+	[picker setAllowsPickingMultipleItems: YES];                        // 3
+	[self presentModalViewController:picker animated: YES];    // 4
+	[picker release];
+	
+}
+
+- (void) mediaPicker: (MPMediaPickerController *) mediaPicker didPickMediaItems: (MPMediaItemCollection *) collection {
+
+	[self dismissModalViewControllerAnimated: YES]; 
+	[self updatePlayerQueueWithMediaCollection: collection];
+}
+	
+- (void) mediaPickerDidCancel: (MPMediaPickerController *) mediaPicker { 
+	
+	[self dismissModalViewControllerAnimated: YES];
+}
+
+/*
+// Override to allow orientations other than the default portrait orientation.
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    // Return YES for supported orientations
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+*/
+
+- (void)didReceiveMemoryWarning {
+    // Releases the view if it doesn't have a superview.
+    [super didReceiveMemoryWarning];
+    
+    // Release any cached data, images, etc that aren't in use.
+}
+
+- (void)viewDidUnload {
+    [super viewDidUnload];
+    // Release any retained subviews of the main view.
+    // e.g. self.myOutlet = nil;
+}
+
+
+- (void)dealloc {
+    [super dealloc];
+}
+
+
+@end

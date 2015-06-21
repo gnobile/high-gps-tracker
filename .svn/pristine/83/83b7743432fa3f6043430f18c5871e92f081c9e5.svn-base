@@ -1,0 +1,848 @@
+//
+//  FirstViewController.m
+//  highss
+//
+//  Created by Giorgio Nobile on 08/06/10.
+//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//
+#import "FirstViewController.h"
+#import "highestAppDelegate.h"
+#import <QuartzCore/QuartzCore.h>
+#import "ThirdViewController.h"
+
+@implementation FirstViewController
+@synthesize locManager;
+@synthesize startingPoint;
+@synthesize altitudineFeet;
+@synthesize altitudine;
+@synthesize latitudine;
+@synthesize longitudine; 
+@synthesize locations;
+@synthesize speed;
+@synthesize speedms;
+@synthesize citta;
+@synthesize mp;
+@synthesize uspeed;
+@synthesize uspeedms;
+@synthesize geoCoder;
+@synthesize dir;
+@synthesize status;
+@synthesize emailx;
+@synthesize totaldistance;
+@synthesize play;
+@synthesize active;
+NSString *latitudineString;
+NSString *longitudineString;
+NSTimer *myTimer;
+BOOL ismagne = NO;
+int oldCourse;
+float setGps;
+//BOOL setSpeed;
+BOOL setLock;
+BOOL setUnit;
+int counter = 0;
+NSString *filePath;
+int checkThreeData = 0;
+int firstRecord = 0;
+NSString *myoldlatitude;
+NSString *myoldlongitude;
+int firstAltitude = 0;
+int altitudeRecord = 0;
+NSString *myLastAltitude;
+int contaAlt = 0;
+BOOL locationChanged;
+NSDateFormatter *datex;
+NSString *datax;
+NSDateFormatter *giornex;
+NSString *giornox;
+CGFloat totalDistanceTraveled = 0.00f;
+int myDistInt;
+
+
+
+
+
+//FB Var
+@synthesize session = _session;
+@synthesize postGradesButton = _postGradesButton;
+@synthesize logoutButton = _logoutButton;
+@synthesize loginDialog = _loginDialog;
+@synthesize facebookName = _facebookName;
+@synthesize posting = _posting;
+
+
+// Implement viewDidLoad to do additional setup after loading the view, typically from a nib.
+#pragma mark -
+
+- (void)viewDidLoad {
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	NSArray *languages = [defaults objectForKey:@"AppleLanguages"];
+	
+	//setto data e giorno per salvataggi
+	datex = [[[NSDateFormatter alloc] init] autorelease];
+	[datex setDateFormat:@"dd_MM_yyyy_HH_mm_"];
+	datax = [datex stringFromDate:[NSDate date]];
+	
+	giornex = [[[NSDateFormatter alloc]init] autorelease];
+	[giornex setDateFormat:@"ddMMyyyy"];
+	giornox = [giornex stringFromDate:[NSDate date]];
+	
+	//Setto fonts applicazione
+	UIFont *altFont = [UIFont fontWithName:@"DBLCDTempBlack" size:45.0];
+	UIFont *coordinateFont = [UIFont fontWithName:@"DBLCDTempBlack" size:15.0];
+	latitudine.font = coordinateFont;
+	longitudine.font = coordinateFont;
+	altitudine.font = altFont;
+	altitudineFeet.font = altFont;
+	altitudine.text =@"0";
+	altitudineFeet.text =@"0";
+
+	//alloco oggetto 
+	self.locManager = [[CLLocationManager alloc] init];
+	
+	//definisco delegate x accedere ai suoi metodi
+	locManager.delegate = self;
+	//setto l'accuratezza dei dati cquisiti
+	//[locManager stopUpdatingLocation];
+	//star della localizzazione
+	//[locManager startUpdatingLocation];
+	
+	//controllo presenza magnetometro
+	if (locManager.headingAvailable) {
+		[locManager startUpdatingHeading];
+		ismagne = YES;
+	} else {
+		ismagne = NO;
+	}
+	
+	//starto e schedulo reverse geocode
+	[self reversing];
+	myTimer = [NSTimer scheduledTimerWithTimeInterval:35 target:self selector:@selector(reversing) userInfo:NULL repeats:YES];
+	
+	//FB COnnect
+	static NSString* kApiKey = @"6dfa4cc5b21eeaf25aa7ac13aae1d0cc";
+	static NSString* kApiSecret = @"10fa27831c5c78fe5fb38657792ea425";
+	_session = [[FBSession sessionForApplication:kApiKey secret:kApiSecret delegate:self] retain];
+	
+	// Load a previous session from disk if available.  Note this will call session:didLogin if a valid session exists.
+	[_session resume];
+	
+	
+	//Creao directory di salvataggio se non esiste
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSError *errorexx;
+	BOOL dirP = [fileManager createDirectoryAtPath:[self dirPath] withIntermediateDirectories:YES attributes:nil error:&errorexx];
+	if(dirP){
+		NSLog(@"success dirPath!");
+	} else {
+		NSLog(@"error dirPath: %@",errorexx);
+	}
+	BOOL dayP = [fileManager createDirectoryAtPath:[self dayPath] withIntermediateDirectories:YES attributes:nil error:&errorexx];
+	if(dayP){
+		NSLog(@"success dayPath!");
+	} else {
+		NSLog(@"error dayPath: %@",errorexx);
+	}
+
+	//Controllo e creazione temporanei di sessione e di salvataggio in caso esistano giaà
+	if ([[NSFileManager defaultManager] fileExistsAtPath:[self dataFilePath]]) {
+		[[NSFileManager defaultManager] moveItemAtPath:[self dataFilePath] toPath:[self savePathRotta] error:nil];			
+		[[NSFileManager defaultManager] createFileAtPath: [self dataFilePath] contents:nil attributes:nil];
+		NSLog(@"Route creato");
+	}else {
+		[[NSFileManager defaultManager] createFileAtPath: [self dataFilePath] contents:nil attributes:nil];
+	}
+	if ([[NSFileManager defaultManager] fileExistsAtPath:[self meterFilePath]]) {
+		[[NSFileManager defaultManager] moveItemAtPath:[self meterFilePath] toPath:[self savePathAltezza] error:nil];			
+		[[NSFileManager defaultManager] createFileAtPath: [self meterFilePath] contents:nil attributes:nil];
+		NSLog(@"Altezza creato");
+	} else {
+		[[NSFileManager defaultManager] createFileAtPath: [self meterFilePath] contents:nil attributes:nil];
+	}
+	//self.locations = [NSMutableArray arrayWithCapacity:32];
+	[super viewDidLoad];
+}
+
+
+- (void)viewDidAppear :(BOOL)animated { 
+	//acceto al plist dei settaggi e lo leggo
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults]; 
+//	setSpeed = [defaults boolForKey:kSpeed];
+	setGps  = [defaults floatForKey:kGps] ;
+	setLock = [defaults boolForKey:kAutolock];
+	setUnit = [defaults boolForKey:kUnit];
+	if ((setGps >= 0) && (setGps < 5))
+	{
+		locManager.distanceFilter = 5.0f;
+		locManager.desiredAccuracy = kCLLocationAccuracyBest;
+	} else if ((setGps >= 3) && (setGps <7))
+	{
+		locManager.distanceFilter = 30.0f;
+		locManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+	}else if ((setGps >= 7) && (setGps <=10))
+	{
+		locManager.distanceFilter = 70.0f;
+		locManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters;
+	}
+	
+	if (setLock == YES) {
+		UIApplication *lockStat = [UIApplication sharedApplication];
+		lockStat.idleTimerDisabled = NO;
+		//NSLog(@"Autolock Abilitato");
+	}
+	else { 
+		UIApplication *lockStat = [UIApplication sharedApplication];
+		lockStat.idleTimerDisabled = YES;
+		//NSLog(@"Autolock Disabilitato");
+	}
+	if (setUnit == YES ) {
+	//	mp.text =@"meter";
+		mp.text = [NSString stringWithFormat:@"%@" , NSLocalizedString(@"mkey", @"")];
+		[altitudineFeet setHidden:YES];
+		[altitudine setHidden:NO];
+	} 
+	if (setUnit == NO ) {
+		//mp.text =@"feet";
+		mp.text =[NSString stringWithFormat:@"%@" , NSLocalizedString(@"fkey", @"")];
+		[altitudineFeet setHidden:NO];
+		[altitudine setHidden:YES];
+	}
+/*	if (setSpeed == YES ) {
+		uspeed.text = @"km/h";
+		[uspeedms setHidden:YES];
+		[uspeed setHidden:NO];
+		[speedms setHidden:YES];
+		[speed setHidden:NO];
+	} 
+	if (setSpeed == NO ) {
+		uspeedms.text =@"m/s";
+		[uspeedms setHidden:NO];
+		[uspeed setHidden:YES];
+		[speedms setHidden:NO];
+		[speed setHidden:YES];
+	}*/
+	[super viewDidAppear:animated];
+}
+	
+// Override to allow orientations other than the default portrait orientation.
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
+    // Return YES for supported orientations
+    return (interfaceOrientation == UIInterfaceOrientationPortrait);
+}
+
+
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+}
+
+- (void)viewDidUnload {
+	self.locations = nil;
+	self.session =nil;
+	self.postGradesButton = nil;
+	self.logoutButton = nil;
+	self.loginDialog =nil;
+	self.facebookName = nil;
+	latitudineString = nil;
+	longitudineString = nil;
+	self.latitudine = nil;
+	self.longitudine = nil;
+	self.startingPoint = nil;
+	self.altitudine = nil;
+	self.altitudineFeet = nil;
+	self.totaldistance = nil;
+	self.uspeed = nil;
+	self.uspeedms = nil;
+	self.citta = nil;
+	self.dir = nil;
+	[locManager stopUpdatingLocation];
+	[locManager stopUpdatingHeading];
+	self.locManager = nil;
+	self.status = nil;
+	self.startingPoint = nil;
+	filePath = nil;
+	myoldlatitude = nil;
+	myoldlongitude = nil;
+	myLastAltitude = nil;
+	self.play = nil;
+	self.emailx = nil;
+	self.locations = nil;
+	self.totaldistance = nil;
+	[super viewDidUnload];	
+
+}
+
+- (void)dealloc {
+	//FB
+	[_postGradesButton release];
+	[_logoutButton release];
+	[_loginDialog release];
+	[_facebookName release];
+	[_session release];
+	//
+	[locations release];
+	[play release];
+	[emailx release];
+	[filePath release];
+	[myoldlatitude release];
+	[myoldlongitude release];
+	[myLastAltitude release];
+	[latitudineString release];
+	[longitudineString release];
+	[locManager release];
+	[altitudine release];
+	[longitudine release];
+	[latitudine release];
+	[altitudineFeet release];
+	[totaldistance release];
+	[speed		release];
+	[citta		release];
+	[uspeed		release];
+	[uspeedms   release];
+	[dir release];
+	[geoCoder release];
+	[myTimer invalidate];
+	[myTimer release];
+	[status release];
+	[startingPoint release];
+//	[locations release];
+	[totaldistance release];
+    [super dealloc];
+
+}
+
+#pragma mark -
+#pragma mark CLLocationManagerDelegate Methods
+
+- (void) locationManager:(CLLocationManager *)manager didUpdateToLocation:(CLLocation *)newLocation
+			fromLocation:(CLLocation *)oldLocation {
+	
+	//[self.locations addObject:newLocation];
+	NSDate* newLocationEventTime = newLocation.timestamp;
+    NSTimeInterval howRecentNewLocation = [newLocationEventTime timeIntervalSinceNow];
+	//controllo se la localizzazione è cambiata
+	if((newLocation.coordinate.latitude != oldLocation.coordinate.latitude) && 
+	   (newLocation.coordinate.longitude != oldLocation.coordinate.longitude)) {
+		locationChanged = YES;
+	}
+	//se localizzazione nuova controllo l'accuratezza dei dati per scartare valori precedenti
+	//if ((!startingPoint || startingPoint.horizontalAccuracy >= newLocation.horizontalAccuracy) && (howRecentNewLocation < -0.0 && howRecentNewLocation > -15.0))  {
+	if ((!startingPoint || startingPoint.horizontalAccuracy >= newLocation.horizontalAccuracy) && (howRecentNewLocation < -0.0 && howRecentNewLocation > -15.0) && ( (newLocation.horizontalAccuracy < (oldLocation.horizontalAccuracy - 10.0)) || (newLocation.horizontalAccuracy < 50.0) ) && locationChanged)  {
+		[self stopanimating];
+		if (startingPoint == nil) {
+			self.startingPoint = newLocation;
+		}	
+		if (myDistInt > 0) {
+	//calcolo distanza percorsa
+			if ([newLocation respondsToSelector:@selector(distanceFromLocation:)]){
+				totalDistanceTraveled += fabs([newLocation distanceFromLocation:oldLocation]);
+			} else if ([newLocation respondsToSelector:@selector(getDistanceFrom:)]){
+				totalDistanceTraveled += fabs([newLocation getDistanceFrom:oldLocation]);
+			}
+		totaldistance.text = [NSString stringWithFormat:@"%5.2fkm", totalDistanceTraveled / 1000] ;
+		}
+		myDistInt ++;
+	//inizio controllo e scrittura su file delle coordinate
+		latitudineString = [[NSString alloc] initWithFormat:@"%g", newLocation.coordinate.latitude];
+		latitudine.text = latitudineString;
+		[latitudineString release];
+		longitudineString = [[NSString alloc] initWithFormat:@"%g", newLocation.coordinate.longitude];
+		longitudine.text = longitudineString;	
+		[longitudineString release];
+		
+		if (checkThreeData >2) {
+			NSString *file;
+			if (firstRecord == 0) {
+				file = [NSString stringWithFormat:@"%@,%@", latitudine.text, longitudine.text];
+				firstRecord++;
+				myoldlatitude = latitudine.text;
+				myoldlongitude = longitudine.text;
+				NSData *data = [file dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+				NSFileHandle *handle;
+				handle = [NSFileHandle fileHandleForWritingAtPath:[self dataFilePath]];
+				[handle truncateFileAtOffset:[handle seekToEndOfFile]];
+				[handle writeData:data];	
+				[handle closeFile];
+				//NSLog(@"FIRST RECORD - vecchia latitudine: %@ nuova latitudine: %@", myoldlatitude, latitudine.text);
+				//NSLog(@"FIRST RECORD - vecchia longitudine: %@ nuova longitudine: %@", myoldlongitude, longitudine.text);
+			}
+			if ((myoldlatitude != latitudine.text) || (myoldlongitude != longitudine.text)) {
+				//aggiungere controllo x scartare valori pessimi
+				file = [NSString stringWithFormat:@"\r%@,%@", latitudine.text, longitudine.text];
+				NSData *data = [file dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+				NSFileHandle *handle;
+				handle = [NSFileHandle fileHandleForWritingAtPath:[self dataFilePath]];
+				[handle truncateFileAtOffset:[handle seekToEndOfFile]];
+				[handle writeData:data];	
+				[handle closeFile];
+				myoldlatitude = latitudine.text;
+				myoldlongitude = longitudine.text;
+			}
+			else {
+	//			NSLog(@"Latitudine precedente %@ uguale a nuova latitudine %@", myoldlatitude, latitudine.text);
+	//			NSLog(@"Longitudine precedente %@ uguale a nuova longitudine %@", myoldlongitude, longitudine.text);
+			}
+
+		}else {
+	//		NSLog(@" Coordinate: Scarto il %d record", checkThreeData);
+		}
+		checkThreeData++;
+
+	//codice per iphone 3g senza magnetometro
+		if (ismagne == NO) {
+			NSString *courseString = [[NSString alloc] initWithFormat:@"%3.0f", newLocation.course];
+			NSString *oldCourseString = [[NSString alloc] initWithFormat:@"%3.0f", oldLocation.course];
+			int myLastCourse = [oldCourseString intValue];
+			int myIntCourse = [courseString intValue];
+			oldCourse = myLastCourse;
+			if (myIntCourse <0 && oldCourse >=0) {
+				[dir setImage:[UIImage imageNamed:@"no.png"]];
+				[dir setTransform:CGAffineTransformMakeRotation(oldCourse * 3.14159/180)];
+			}
+			if (myIntCourse >= 0) {
+				[dir setImage:[UIImage imageNamed:@"no.png"]];
+				[dir setTransform:CGAffineTransformMakeRotation(myIntCourse * 3.14159/180)];
+			}
+		[courseString release];
+		[oldCourseString release];
+		}
+	
+	//Velocità
+	/*NSString *stringSpeed = [[NSString alloc] initWithFormat:@"%3.2f", newLocation.speed * 3.6];			
+	NSString *stringSpeedMS = [[NSString alloc] initWithFormat:@"%3.2f", newLocation.speed ];
+	int myIntSpeed = [stringSpeed intValue];
+	if (myIntSpeed >0) {
+		speed.text = stringSpeed;
+		speedms.text = stringSpeedMS;
+	}
+	[stringSpeed release];
+	[stringSpeedMS release];*/
+	
+	//Altitudine e scrittura su file dei dati ricevuti
+		NSString *altitudineString = [[NSString alloc] initWithFormat:@"%5.0f", newLocation.altitude];
+		NSString *noSpacesMeter = [altitudineString stringByTrimmingCharactersInSet:
+							   [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+		NSString *altitudineStringF = [[NSString alloc] initWithFormat:@"%5.0f", newLocation.altitude*3.82];
+		altitudine.text = noSpacesMeter;
+		altitudineFeet.text = altitudineStringF;
+		int myIntAlt;
+		int myIntLastAltitude;
+		myIntAlt = [noSpacesMeter intValue];
+	//animazione segnale se alt < 0
+		if (myIntAlt <= 0) {
+			[self animating];
+			[self.view bringSubviewToFront:status];
+			}
+		else { 
+			[self stopanimating];
+			//Scrivo grafico alitudine metri	
+			}
+		[altitudineString release];
+		[altitudineStringF release];
+		if (myIntAlt >0) {
+			if (altitudeRecord == 0) {
+				NSString* file = [NSString stringWithFormat:@"%@", altitudine.text];
+				altitudeRecord++;
+				NSData *data = [file dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+				NSFileHandle *handle;
+				handle = [NSFileHandle fileHandleForWritingAtPath:[self meterFilePath]];
+				[handle truncateFileAtOffset:[handle seekToEndOfFile]];
+				[handle writeData:data];
+				[handle closeFile];
+				myLastAltitude = altitudine.text;
+				myIntLastAltitude = [myLastAltitude intValue];
+			} 
+			if (myLastAltitude != altitudine.text){
+				//	if (contaAlt > 1) 
+				//	{ 
+				NSString* file = [NSString stringWithFormat:@"\r%@", altitudine.text];
+				NSData *data = [file dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];				
+				NSFileHandle *handle;
+				handle = [NSFileHandle fileHandleForWritingAtPath:[self meterFilePath]];
+				[handle truncateFileAtOffset:[handle seekToEndOfFile]];
+				[handle writeData:data];
+				[handle closeFile];
+				myLastAltitude = altitudine.text;
+				myIntLastAltitude = [myLastAltitude intValue];
+		//	NSLog(@"Scrivo valore di altitudine perchè contaalt > 4 %@", altitudine.text);
+		//	contaAlt = 0;
+				} 
+			else 
+			{ 
+				myLastAltitude = altitudine.text;
+				myIntLastAltitude = [myLastAltitude intValue];
+			}
+		}
+			else 
+			{
+		//		NSLog(@"valore nullo o zero lo scarto");
+			}
+	}
+
+}
+
+/*
+ -(void)noway {
+ 
+ CABasicAnimation* rotationAnimation;
+ rotationAnimation = [CABasicAnimation animationWithKeyPath:@"transform.rotation.z"];
+ rotationAnimation.toValue = [NSNumber numberWithFloat: 360 * 3.14591 / 180 ];
+ rotationAnimation.duration = 1.5;
+ rotationAnimation.cumulative = YES;
+ rotationAnimation.repeatCount = INFINITY; 
+ rotationAnimation.removedOnCompletion = YES;
+ [dir.layer addAnimation:rotationAnimation forKey:@"rotationAnimation"];
+ 
+ }
+ */
+
+- (void)reversing {
+	geoCoder=[[MKReverseGeocoder alloc] initWithCoordinate:locManager.location.coordinate];
+	//geoCoder=[[MKReverseGeocoder alloc] initWithCoordinate:[[self locManager].location.coordinate]];
+	geoCoder.delegate=self;
+	[geoCoder start];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didUpdateHeading:(CLHeading *)newHeading 
+{
+	NSString *courseString = [[NSString alloc] initWithFormat:@"%3.0f", newHeading.trueHeading];
+	int myIntCourse = [courseString intValue];
+	[dir setImage:[UIImage imageNamed:@"no.png"]];
+	[dir setTransform:CGAffineTransformMakeRotation(myIntCourse * 3.14159/180)];
+	[courseString release];	
+}
+
+
+- (void)reverseGeocoder:(MKReverseGeocoder *)geocoder didFailWithError:(NSError *)error{
+	citta.text =@ "Retrieving City";
+	[_postGradesButton setEnabled:NO];
+	//[emailx setEnabled:NO];
+	//NSLog(@"%@",error);
+	[geoCoder cancel];
+	//NSLog(@"geocoder released Unknow");
+	
+	
+	
+}
+
+- (void)reverseGeocoder:(MKReverseGeocoder *)geocoder didFindPlacemark:(MKPlacemark *)placemark
+
+{
+	citta.text = [placemark locality];
+	//NSLog(@"Retrive City %@", [placemark locality]);
+	[geoCoder cancel];
+	//NSLog(@"geocoder released");
+	[_postGradesButton setEnabled:YES];	
+	//[emailx setEnabled:YES];
+}
+
+- (void)locationManager: (CLLocationManager *)manager
+	   didFailWithError: (NSError *)error
+{
+	[locManager stopUpdatingLocation];
+	[self animating];
+	[self.view bringSubviewToFront:status];
+	//[manager stopUpdatingLocation];
+	//NSLog(@"error%@",error);
+	switch([error code])
+	{
+		case kCLErrorNetwork: // general, network-related error
+		{
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Please check your network connection or that you are not in airplane mode" delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+			[alert show];
+			[alert release];
+			[locManager startUpdatingLocation];
+		}
+			break;
+		case kCLErrorDenied:{
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"User has denied to use current Location " delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+			[alert show];
+			[alert release];
+		}
+			break;
+		default:
+		{
+			UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Error" message:@"Unknown network error, restarting GPS connection" delegate:self cancelButtonTitle:@"Ok" otherButtonTitles:nil, nil];
+			[alert show];
+			[alert release];
+			altitudine.text =@"0";
+			//speed.text =@"0";
+			[locManager startUpdatingLocation];
+		}
+			break;
+	}
+}
+
+
+
+-(BOOL)locationManagerShouldDisplayHeadingCalibration:(CLLocationManager *)manager{
+	return YES;
+}
+
+#pragma mark emailcomposer
+
+-(IBAction)emailTo:(id)sender {
+	if ([[NSFileManager defaultManager] fileExistsAtPath:[self kmlFilePath]]) {
+		[[NSFileManager defaultManager] removeItemAtPath: [self kmlFilePath] error:nil];
+	}
+		//[[NSFileManager defaultManager] copyItemAtPath:[self kmlFilePath] toPath:[self moveKmlFilePath] error:nil];
+		NSArray *docPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+		NSString *docDirectory = [docPaths objectAtIndex:0];
+		
+		NSString *srcPath = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:@"track.kml"];
+		NSString *destPath = [docDirectory stringByAppendingPathComponent:@"mytrack.kml"];		
+		// NSLog(@"Src: %@, Dest: %@", srcPath, destPath);
+		NSError *err;
+		[[NSFileManager defaultManager] copyItemAtPath:srcPath toPath:destPath error:&err];			
+		NSLog(@"kml importato");
+	
+	NSString *string = [NSString stringWithContentsOfFile:[self dataFilePath]];
+	
+    NSArray *array = [string componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+	if ([array count] > 1){
+	for(int idx = 0; idx < [array count]; idx++)
+	{
+		NSString* currentPointString = [array objectAtIndex:idx];
+		NSArray* latLonArr = [currentPointString componentsSeparatedByCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@","]];
+		NSString* latitude = [[latLonArr objectAtIndex:0] description];
+		NSString* longitude = [[latLonArr objectAtIndex:1] description];
+		//	NSLog(@"Latitudine: %@", latitude);
+		//	NSLog(@"Longitudine: %@", longitude);
+		
+		NSString *klm = [NSString stringWithFormat:@"%@,%@\n\t\t", longitude, latitude];
+		NSData *klmData = [klm dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+		NSFileHandle *writeKlm = [NSFileHandle fileHandleForWritingAtPath:[self kmlFilePath]];
+		[writeKlm truncateFileAtOffset:[writeKlm seekToEndOfFile]];
+		[writeKlm writeData:klmData];
+		[writeKlm closeFile];
+	}
+	NSString *klm = [NSString stringWithFormat:@"</coordinates>\n        </LineString>\n        </MultiGeometry>\n    </Placemark>\n  </Document>\n</kml>"];
+	NSData *klmData = [klm dataUsingEncoding:NSASCIIStringEncoding allowLossyConversion:YES];
+	NSFileHandle *writeKlm = [NSFileHandle fileHandleForWritingAtPath:[self kmlFilePath]];
+	[writeKlm truncateFileAtOffset:[writeKlm seekToEndOfFile]];
+	[writeKlm writeData:klmData];
+	[writeKlm closeFile];
+	} else {
+		[[NSFileManager defaultManager] removeItemAtPath: [self kmlFilePath] error:nil];
+	}
+	[self displayComposerSheet];
+}
+
+-(void)displayComposerSheet 
+{
+	MFMailComposeViewController *picker = [[MFMailComposeViewController alloc] init];
+	picker.mailComposeDelegate = self;
+	[picker setSubject:@"high - GPS Tracker and Altimeter Stuff generate I'm here!"];
+	
+	// Attach an image to the email
+	// salvo la mia immagine
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	
+	NSString *path = [documentsDirectory stringByAppendingPathComponent:@"mytrack.kml"];
+    NSData *myData = [NSData dataWithContentsOfFile:path];
+	if ([[NSFileManager defaultManager] fileExistsAtPath:[self kmlFilePath]]) {
+
+		[picker addAttachmentData:myData mimeType:@"text/xml" fileName:@"mytrack.kml"];
+		NSString *emailBody  = [NSString stringWithFormat:@"<p>Hello,<br><br>I'm in %@<br>at<br>latitude %@<br>and<br>longitude %@<p><b>Total distance:%@<p><p><IMG src=\"http://maps.google.com/maps/api/staticmap?size=300x300&markers=color:blue|label:Hello|%@,%@&zoom=15&mobile=true&sensor=false\"<p><br>In attach you can find a .kml file containing your track.<br>You can visualize it with Google Earth!!!<p><br>Generated by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker and Altimeter Stuff</A>", 
+								citta.text, latitudine.text, longitudine.text, totaldistance.text, latitudine.text, longitudine.text];
+		[picker setMessageBody:emailBody isHTML:YES];
+		
+	} else {
+		NSString *emailBody  = [NSString stringWithFormat:@"<p>Hello,<br><br>I'm in %@<br>at<br>latitude %@<br>and<br>longitude %@<p><b>Total distance:%@<p><p><IMG src=\"http://maps.google.com/maps/api/staticmap?size=300x300&markers=color:blue|label:Hello|%@,%@&zoom=15&mobile=true&sensor=false\"<p><br>Generated by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker and Altimeter Stuff</A>", 
+								citta.text, latitudine.text, longitudine.text, totaldistance.text, latitudine.text, longitudine.text];
+		[picker setMessageBody:emailBody isHTML:YES];		
+	}
+
+	[self presentModalViewController:picker animated:YES];
+	[picker release];
+}
+
+
+// Dismisses the email composition interface when users tap Cancel or Send. Proceeds to update the message field with the result of the operation.
+- (void)mailComposeController:(MFMailComposeViewController*)controller didFinishWithResult:(MFMailComposeResult)result error:(NSError*)error 
+{	
+	[self dismissModalViewControllerAnimated:YES];
+}
+
+#pragma mark animazioni
+
+- (void)animating {
+
+	status.animationImages = [NSArray arrayWithObjects:
+							  [UIImage imageNamed:@"a1.png"],
+							  [UIImage imageNamed:@"a2.png"],
+							  [UIImage imageNamed:@"a3.png"],
+							  [UIImage imageNamed:@"all.png"],
+							  nil];
+	status.animationDuration = 1.2;
+	status.animationRepeatCount = 0;
+	[status startAnimating];
+	
+}
+
+- (void) stopanimating {
+	[status stopAnimating];
+	[status setImage:[UIImage imageNamed:@"connected.png"]];
+}
+
+-(IBAction)updating:(id)sender{
+	[[self locManager] startUpdatingLocation];
+	if ([sender isSelected]) 
+	{
+		[sender setImage:[UIImage imageNamed:@"play64.png"] forState:UIControlStateNormal ];
+		[sender setSelected:NO];
+		[[self locManager] stopUpdatingLocation];
+		[status setHidden:YES];		
+	}else 
+	{
+		[sender setImage:[UIImage imageNamed:@"pause64r.png"] forState:UIControlStateSelected];
+		[sender setSelected:YES];
+		[[self locManager] startUpdatingLocation];
+		[status setHidden:NO];
+		[mp setHidden:NO];
+		[citta setHidden:NO];
+		[self animating];
+		[self.view bringSubviewToFront:status];
+	}
+}
+
+	
+#pragma mark paths
+	
+- (NSString *)savePathRotta { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+												NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	NSString *tempfile = [datax stringByAppendingString:@"rottina.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@/%@", giornox, tempfile]];
+		
+	}
+
+- (NSString *)savePathAltezza { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	//	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	//	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	//	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datax stringByAppendingString:@"altezza.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@/%@", giornox, tempfile]];
+}
+
+- (NSString *)dirPath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves"]];
+}
+
+- (NSString *)dayPath { 
+	return [[self dirPath] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@", giornox]];
+}
+	
+- (NSString *)dataFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:@"rottina.csv"];	
+}
+
+- (NSString *)meterFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:@"altezza.csv"];
+}
+					
+- (NSString *)kmlFilePath {
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:@"mytrack.kml"];
+}					
+
+#pragma mark
+#pragma mark Facebook
+- (IBAction)postGradesTapped:(id)sender {
+	_posting = YES;
+	// If we're not logged in, log in first...
+	if (![_session isConnected]) {
+		self.loginDialog = nil;
+		_loginDialog = [[FBLoginDialog alloc] init];	
+		[_loginDialog show];	
+	}
+	// If we have a session and a name, post to the wall!
+	else if (_facebookName != nil) {
+		[self postToWall];
+	}
+	// Otherwise, we don't have a name yet, just wait for that to come through.
+}
+
+- (IBAction)logoutButtonTapped:(id)sender {
+	[_session logout];
+}
+
+- (void)session:(FBSession*)session didLogin:(FBUID)uid {
+	[self getFacebookName];
+}
+
+- (void)session:(FBSession*)session willLogout:(FBUID)uid {
+	_logoutButton.hidden = YES;
+	_facebookName = nil;
+}
+
+
+- (void)getFacebookName {
+	NSString* fql = [NSString stringWithFormat:
+					 @"select uid,name from user where uid == %lld", _session.uid];
+	NSDictionary* params = [NSDictionary dictionaryWithObject:fql forKey:@"query"];
+	[[FBRequest requestWithDelegate:self] call:@"facebook.fql.query" params:params];
+}
+
+#pragma mark FBRequestDelegate methods
+
+- (void)request:(FBRequest*)request didLoad:(id)result {
+	if ([request.method isEqualToString:@"facebook.fql.query"]) {
+		NSArray* users = result;
+		NSDictionary* user = [users objectAtIndex:0];
+		NSString* name = [user objectForKey:@"name"];
+		self.facebookName = name;		
+		_logoutButton.hidden = NO;
+		[_logoutButton setTitle:[NSString stringWithFormat:@"Facebook: Logout as %@", name] forState:UIControlStateNormal];
+		if (_posting) {
+			[self postToWall];
+			_posting = NO;
+		}
+	}
+}
+
+- (void)postToWall {
+	//NSString *clearString = [discorsoName stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];	
+	FBStreamDialog* dialog = [[[FBStreamDialog alloc] init] autorelease];
+	dialog.userMessagePrompt = @"Enter your message:";
+	//NSString *mex = [[NSString alloc] initWithFormat:@"{\"name\":\"%@ si trova nella seguente citta: %@\"}", _facebookName, citta.text];
+	//NSString *mex = [[NSString alloc] initWithFormat:@"{\"name\":\"%@ si trova nella seguente citta: %@\"," "\"media\":[{\"type\":\"image\"," "\"src\":\"http://maps.google.it/maps?ll=%g,%g&spn=1\"}", _facebookName, citta.text, latitudine.text, longitudine.text];
+	//dialog.attachment = mex;
+	//NSString *mex = [[NSString alloc] initWithFormat:@"{\"name\":\"%@ si trova nella seguente citta: %@\","\"href\":\"http://maps.google.it/maps?ll=%g,%g&spn=1"}"" ,_facebookName, citta.text, latitudine.text, longitudine.text];
+	//"\"media\":[{\"type\":\"image\","
+	//"\"src\":\"http://photos-h.ak.fbcdn.net/photos-ak-sf2p/v43/67/279420942343/app_5_279420942343_8373.gif\","
+	//"\"href\":\"http://developers.facebook.com/connect.php?tab=iphone/\"}],"
+	//"\"properties\":{\"another link\":{\"text\":\"Hafez App HomePage\",\"href\":\"http://www.momeks.com/hafez\"}}}"];
+	// replace this with a friend's UID
+	// dialog.targetId = @"999999";
+	//NSString *mex = [[NSString alloc] initWithFormat:@"{\"name\":\"%@ è a %@\"}", _facebookName, citta.text];
+	//					 _facebookName, clearString];
+	//dialog.attachment = [NSString stringWithFormat:@"{\"name\":\"%@ si trova nella seguente citta\"\"%@href\":\"http://www.marinoluigi.it/\}", _facebookName, citta.text];
+	//dialog.attachment = mex;
+	NSString *mex = [[NSString alloc] initWithFormat:
+						 @"{ \"name\":\"%@ si trova a %@ !\"," "\"media\":[{\"type\":\"image\"," 
+						 "\"src\":\"http://maps.google.com/maps/api/staticmap?size=191x191&markers=color:blue|label:Hello|%@,%@&zoom=15&mobile=true&sensor=false\","
+						 "\"href\":\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\"}],}",
+						 _facebookName, citta.text, latitudine.text, longitudine.text ];
+	dialog.attachment = mex;
+	dialog.actionLinks = @"[{\"text\":\"Scarica l'applicazione!\",\"href\":\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\"}]";
+	[dialog show];
+	NSLog(@"%@", mex);
+}
+
+
+@end
+

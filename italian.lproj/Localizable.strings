@@ -1,0 +1,78 @@
+/* 
+   Localizable.strings
+   highest
+
+   Created by Giorgio Nobile on 30/08/10.
+   Copyright 2010 ZeroNetAPP. All rights reserved.
+ */
+//TrackDetail
+"kPercorsi" = "Tracce";
+"kDettaglio" = "Dettaglio";
+"kNomeTraccia" = "Nome Traccia";
+"kEsportaTraccia" = "Esporta Traccia";
+"kVisualizzaTraccia" = "Visualizza";
+"kExpCSV" = "Esporta Traccia CSV";
+"kExpGPX" = "Esporta Traccia GPX"; 
+"kExpKML" = "Esporta Traccia KML"; 
+"kVtrack" = "Visualizza Traccia";
+"kValt" = "Visualizza Altimetria";
+
+//Settings
+
+"sTitolo" = "Impostazioni";
+"sGenerali" = "Generali";
+"sAccu" = "Accuratezza GPS";
+"sLock" = "Autolock Abilitato";
+"sUnit" = "Metri/Piedi";
+"sCoordF" = "Coordinate DD/DMS";
+
+//Dettaglio
+"dStatistiche" = "Statistiche";
+"dData" = "Data";
+"dStart" = "Partenza";
+"dStop" = "Arrivo";
+"dDislivello" = "Dislivello";
+"dDistanza" = "Distanza";
+"dDurata" = "Durata";
+
+
+"mkey" = "metri";
+"fkey" = "piedi";
+"altkey" = "Altitudine";
+"citikey" = "Ricerco Città";
+"errkey" = "Info";
+"denykey" = "Richiesta di localizzazione cancellata dall'utente";
+
+"bodykeystats" = "Statistiche<p>Data: <b>%@</b><br>Partenza: <b>%@</b><br>Arrivo: <b>%@</b><br>Dislivello: <b>%@</b><br>Distanza: <b>%@</b><br>Durata: <b>%@</b><p>Traccia GPX in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeystatskml" = "Statistiche<p>Data: <b>%@</b><br>Partenza: <b>%@</b><br>Arrivo: <b>%@</b><br>Dislivello: <b>%@</b><br>Distanza: <b>%@</b><br>Durata: <b>%@</b><p>Traccia KML in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeystatscsv" = "Statistiche<p>Data: <b>%@</b><br>Partenza: <b>%@</b><br>Arrivo: <b>%@</b><br>Dislivello: <b>%@</b><br>Distanza: <b>%@</b><br>Durata: <b>%@</b><p>Traccia CSV in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+
+"bodykey" = "Traccia GPX in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeykml" = "Traccia KML in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeycsv" = "Traccia CSV in allegato.<br>Generato da <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+//fb
+"dwnkey" = "[{\"text\":\"Scarica l'applicazione\",\"href\":\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\"}]";
+"fbmsgprompt" = "Inserisci il tuo messaggio:";
+"fbwhere" = "si trova a";
+"fbtraver" = "ed ha percorso";
+"fbwith" = "con high GPS Tracker";
+
+
+//UIActionSheet
+
+"uiasTitle" = "Scegli l'allegato";
+"uiasCancel" = "Annulla";
+"uiasKML" = "Esporta la traccia in KML";
+"uiasGPX" = "Esporta la traccia in GPX";
+"uiasCSV" = "Esporta la traccia in CSV";
+
+
+"stopTitle" = "Vuoi salvare la traccia corrente ed iniziarne una nuova?";
+"stopOk" = "Si";
+
+//rate
+"rate_body" = "Se ti è piaciuto usare high GPS Tracker mi farebbe piacere leggere una tua recensione, non ti porterà via più di una manciata di secondi. Grazie per il supporto al mio lavoro";
+"rate_cancel" = "No Grazie";
+"rate_title" = "Recensisci high GPS Tracker";
+"rate_button" = "Vota ora";
+"rate_later" = "Vota più tardi";

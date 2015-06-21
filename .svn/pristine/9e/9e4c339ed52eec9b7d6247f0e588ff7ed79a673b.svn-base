@@ -1,0 +1,18 @@
+//
+//  MusicViewController.h
+//  highest
+//
+//  Created by Giorgio Nobile on 02/07/10.
+//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <MediaPlayer/MediaPlayer.h>
+
+
+
+@interface MusicViewController : UIViewController <MPMediaPickerControllerDelegate> {
+
+}
+
+@end

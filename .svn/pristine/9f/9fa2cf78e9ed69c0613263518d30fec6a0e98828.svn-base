@@ -1,0 +1,252 @@
+//
+//  highestAppDelegate.m
+//  highest
+//
+//  Created by Giorgio Nobile on 06/05/10.
+//  Copyright __MyCompanyName__ 2010. All rights reserved.
+//
+
+#import "highestAppDelegate.h"
+#import "FirstViewController.h"
+#import <MediaPlayer/MediaPlayer.h>
+
+
+@implementation highestAppDelegate
+
+@synthesize window;
+@synthesize tabBarController;
+
+/*
+- (void)applicationDidFinishLaunching:(UIApplication *)application {
+    [window addSubview:tabBarController.view];
+	//[self dataFilePath];
+    //[window makeKeyAndVisible];
+}*/
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {    
+    
+    // Override point for customization after application launch.
+	
+    // Add the view controller's view to the window and display.
+    [window addSubview:tabBarController.view];
+    [window makeKeyAndVisible];
+	
+    return YES;
+}
+
+- (void)applicationWillResignActive:(UIApplication *)application {
+    /*
+     Sent when the application is about to move from active to inactive state. This can occur for certain types of temporary interruptions (such as an incoming phone call or SMS message) or when the user quits the application and it begins the transition to the background state.
+     Use this method to pause ongoing tasks, disable timers, and throttle down OpenGL ES frame rates. Games should use this method to pause the game.
+     */
+}
+
+
+- (void)applicationDidEnterBackground:(UIApplication *)application {
+	
+    /*
+     Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later. 
+     If your application supports background execution, called instead of applicationWillTerminate: when the user quits.
+     */
+}
+
+
+- (void)applicationWillEnterForeground:(UIApplication *)application {
+    /*
+     Called as part of  transition from the background to the inactive state: here you can undo many of the changes made on entering the background.
+     */
+}
+
+
+- (void)applicationDidBecomeActive:(UIApplication *)application {
+    /*
+     Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+     */
+}
+
+
+
+/*
+// Optional UITabBarControllerDelegate method
+- (void)tabBarController:(UITabBarController *)tabBarController didSelectViewController:(UIViewController *)viewController {
+}
+*/
+
+/*
+// Optional UITabBarControllerDelegate method
+- (void)tabBarController:(UITabBarController *)tabBarController didEndCustomizingViewControllers:(NSArray *)viewControllers changed:(BOOL)changed {
+}
+*/
+
+-(void)applicationWillTerminate:(UIApplication *)application{
+	
+	datex = [[[NSDateFormatter alloc] init] autorelease];
+	[datex setDateFormat:@"dd_MM_yyyy_HH_mm_"];
+	datax = [datex stringFromDate:[NSDate date]];
+	
+	giornex = [[[NSDateFormatter alloc]init] autorelease];
+	[giornex setDateFormat:@"ddMMyyyy"];
+	giornox = [giornex stringFromDate:[NSDate date]];
+	
+	//[[NSFileManager defaultManager] copyItemAtPath:[self dataFilePath] toPath:[self moveDataFilePath] error:nil];			
+	//[[NSFileManager defaultManager] copyItemAtPath:[self meterFilePath] toPath:[self moveMeterFilePath] error:nil];			
+	//[[NSFileManager defaultManager] copyItemAtPath:[self kmlFilePath] toPath:[self moveKmlFilePath] error:nil];			
+
+	
+	
+	//[[NSFileManager defaultManager] moveItemAtPath:[self dataFilePath] toPath:[self moveDataFilePath] error:nil];
+	//[[NSFileManager defaultManager] moveItemAtPath:[self meterFilePath] toPath:[self moveMeterFilePath] error:nil];
+	//[[NSFileManager defaultManager] moveItemAtPath:[self kmlFilePath] toPath:[self moveKmlFilePath] error:nil];
+	[[NSFileManager defaultManager] copyItemAtPath:[self dataFilePath] toPath:[self savePathRotta] error:nil];			
+	[[NSFileManager defaultManager] copyItemAtPath:[self meterFilePath] toPath:[self savePathAltezza] error:nil];
+	NSLog(@"Ho spostato le dir");
+	[[NSFileManager defaultManager] removeItemAtPath: [self dataFilePath] error:nil];
+	[[NSFileManager defaultManager] removeItemAtPath: [self meterFilePath] error:nil];
+	[[NSFileManager defaultManager] removeItemAtPath: [self kmlFilePath] error:nil];
+
+	
+}
+
+
+- (void)dealloc {
+    [tabBarController release];
+    [window release];
+    [super dealloc];
+}
+
+#pragma mark paths
+
+- (NSString *)savePathRotta { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	//	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	//	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	//	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datax stringByAppendingString:@"rottina.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@/%@", giornox, tempfile]];
+	
+}
+
+- (NSString *)savePathAltezza { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	//	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	//	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	//	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datax stringByAppendingString:@"altezza.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@/%@", giornox, tempfile]];
+	
+}
+
+- (NSString *)dirPath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves"]];
+	
+}
+
+- (NSString *)dayPath { 
+	return [[self dirPath] stringByAppendingPathComponent:[NSString stringWithFormat:@"%@", giornox]];
+	
+}
+
+- (NSString *)moveDataFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datas stringByAppendingString:@"rottina.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@",tempfile]];	
+}
+
+- (NSString *)moveMeterFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datas stringByAppendingString:@"altezza.csv"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@",tempfile]];
+	
+}
+
+- (NSString *)moveKmlFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datas stringByAppendingString:@"mytrack.kml"];
+	return [documentsDirectory stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@", tempfile]];	
+}
+
+
+
+- (NSString *)dataFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+
+	return [documentsDirectory stringByAppendingPathComponent:@"rottina.csv"];
+}
+
+- (NSString *)meterFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory  stringByAppendingPathComponent:@"altezza.csv"];
+	
+}
+
+- (NSString *)kmlFilePath { 
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	return [documentsDirectory stringByAppendingPathComponent:@"mytrack.kml"];
+	
+}
+
+//- (NSString *)indexFile {}
+
+- (NSString *)routeTempFile {
+
+	NSArray *paths = NSSearchPathForDirectoriesInDomains(
+														 NSDocumentDirectory, NSUserDomainMask, YES); 
+	NSString *documentsDirectory = [paths objectAtIndex:0]; 
+	//
+	NSDateFormatter* dateFormatter = [[[NSDateFormatter alloc] init] autorelease];
+	[dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+	NSString *datas = [dateFormatter stringFromDate:[NSDate date]];
+	NSString *tempfile = [datas stringByAppendingString:@".coord"];
+	NSString *routeName =@"coordTemp";
+	NSString *fullPathToFile = [documentsDirectory stringByAppendingPathComponent:routeName];
+	if(![[NSFileManager defaultManager] fileExistsAtPath: fullPathToFile]) {
+		[[NSFileManager defaultManager] createFileAtPath: fullPathToFile contents:nil attributes:nil];
+	}
+	NSFileHandle *handle = [NSFileHandle fileHandleForWritingAtPath: fullPathToFile];
+	NSString *data = [NSString stringWithFormat:@"%@", tempfile ];
+	[handle writeData:[data dataUsingEncoding:NSUTF8StringEncoding]];
+	NSString* content = [NSString stringWithContentsOfFile:fullPathToFile
+												  encoding:NSUTF8StringEncoding
+													 error:NULL];
+	
+	return content; //stringByAppendingPathComponent:[NSString stringWithFormat:@"saves/%@", tempfile]];	
+}
+
+
+//- (NSString *)altTempFile {}
+//- (NSString *)trackTempFile {}
+
+
+@end
+

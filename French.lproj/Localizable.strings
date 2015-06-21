@@ -1,0 +1,80 @@
+/* 
+   Localizable.strings
+   highest
+
+   Created by Giorgio Nobile on 30/08/10.
+   Copyright 2010 ZeroNetAPP. All rights reserved.
+ */
+//TrackDetail
+"kPercorsi" = "Rails";
+"kDettaglio" = "Détail";
+"kNomeTraccia" = "Suivre Nom";
+"kEsportaTraccia" = "Exporter Suivre";
+"kVisualizzaTraccia" = "Ecrans";
+"kExpCSV" = "Exporter CSV Suivre";
+"kExpGPX" = "Exporter GPX Suivre"; 
+"kExpKML" = "Exporter KML Suivre"; 
+"kVtrack" = "Ecrans Suivre";
+"kValt" = "Ecrans Altimétrie";
+
+//Statistiche
+"dStatistiche" = "Statistiques";
+"dData" = "Date";
+"dStart" = "Départ";
+"dStop" = "Arrivée";
+"dDislivello" = "Difference";
+"dDistanza" = "Distance";
+"dDurata" = "Durée";
+
+//Settings
+"sTitolo" = "Paramétres";
+"sGenerali" = "Général";
+"sAccu" = "Précision GPS";
+"sLock" = "Autolock Activé";
+"sUnit" = "Metres/Pieds";
+"sCoordF" = "Coordonnées DD/DMS";
+
+"mkey" = "metres";
+"fkey" = "pieds";
+"altkey" = "Altitude";
+"citikey" = "Récupération ville";
+"errkey" = "Avertir";
+"denykey" = "L'utilisateur a refusé d'utiliser du courant Lieu ";
+
+"bodykeystats" = "Statistiques<p>Date: <b>%@</b><p>Départ: <b>%@</b><p>Arrivée: <b>%@</b><p>Difference: <b>%@</b><p>Distance: <b>%@</b><p>Durée: <b>%@</b><br>GPX piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeystatskml" = "Statistiques<p>Date: <b>%@</b><p>Départ: <b>%@</b><p>Arrivée: <b>%@</b><p>Difference: <b>%@</b><p>Distance: <b>%@</b><p>Durée: <b>%@</b><br>KML piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeystatscsv" = "Statistiques<p>Date: <b>%@</b><p>Départ: <b>%@</b><p>Arrivée: <b>%@</b><p>Difference: <b>%@</b><p>Distance: <b>%@</b><p>Durée: <b>%@</b><br>CSV piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+
+"bodykey" = "GPX piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeykml" = "KML piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+"bodykeycsv" = "CSV piste en Joindre.<br>Généré by <A HREF=\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\">high - GPS Tracker</A>";
+
+
+
+//fb
+"dwnkey" = "[{\"text\":\"Télécharger l'Application\",\"href\":\"http://itunes.apple.com/it/app/high-altimeter-and-stuff/id368770019?mt=8\"}]";
+"fbmsgprompt" = "Entrez votre message:";
+"fbwhere" = "est";
+"fbtraver" = "et a voyagé";
+"fbwith" = "avec high GPS Tracker";
+
+
+//UIActionSheet
+"uiasTitle" = "Choisissez la pièce jointe";
+"uiasCancel" = "Discard";
+"uiasKML" = "Exporter en format KML";
+"uiasGPX" = "Exporter en format GPX";
+"uiasCSV" = "Exporter en format CSV";
+
+
+"stopTitle" = "Voulez-vous enregistrer la piste en cours et commencer un nouveau?";
+"stopOk" = "Oui";
+
+//rate
+"rate_body" = "Si vous aimez high GPS Tracker nous serons heureux de lire votre avis Il ne prendra pas plus d'une minute Merci de soutenir notre travail";
+"rate_cancel" = "No";
+"rate_title" = "Taux high GPS Tracker";
+"rate_button" = "Taux";
+"rate_later" = "Taux tard";
+
+
